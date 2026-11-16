@@ -1,0 +1,42 @@
+{{- /*
+Worker tworzony tylko gdy worker.enabled = true (lokalnie wyłączony, na staging/prod włączony).
+Symuluje konsumenta kolejki (np. messenger:consume) z POPRAWNĄ obsługą SIGTERM:
+przy deployu kończy pracę od razu i czysto, zamiast czekać 30 s na SIGKILL (patrz lekcja 1, mailer).
+*/}}
+{{- if .Values.worker.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "demo-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "demo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      containers:
+        - name: worker
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              trap 'echo "SIGTERM: koncze biezaca wiadomosc i wychodze"; exit 0' TERM
+              i=0
+              while true; do
+                i=$((i+1))
+                echo "[{{ .Values.env.APP_ENV }}] przetwarzam wiadomosc #$i"
+                sleep 5 & wait $!
+              done
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}
+{{- end }}

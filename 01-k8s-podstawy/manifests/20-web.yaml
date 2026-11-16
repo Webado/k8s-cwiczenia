@@ -1,0 +1,76 @@
+# Deployment = "chcę mieć N kopii (replik) tego kontenera, zawsze".
+# Pod przestanie istnieć -> Deployment (przez ReplicaSet) stworzy nowy.
+# Hierarchia: Deployment -> ReplicaSet -> Pod(y) -> kontener(y)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: lekcja1
+  labels:
+    app: web
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: web                    # Deployment "zarządza" podami z tym labelem
+  template:                       # <- od tego miejsca: przepis na Poda
+    metadata:
+      labels:
+        app: web                  # musi pasować do selector.matchLabels wyżej
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache   # konkretny tag, NIGDY "latest" na produkcji
+          ports:
+            - containerPort: 80
+          envFrom:                # wszystkie klucze z ConfigMapy jako zmienne środowiskowe
+            - configMapRef:
+                name: app-config
+          env:                    # pojedyncze klucze z Secreta
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: RABBITMQ_PASSWORD
+          volumeMounts:
+            - name: code
+              mountPath: /var/www/html
+          # requests = ile scheduler REZERWUJE na nodzie (wpływa na to, gdzie pod wyląduje)
+          # limits   = twardy sufit. Przekroczysz pamięć -> OOMKilled. CPU -> throttling (spowolnienie)
+          resources:
+            requests:
+              cpu: 50m            # 50 milicore = 5% jednego rdzenia
+              memory: 64Mi
+            limits:
+              memory: 128Mi
+          # readinessProbe: "czy mogę dostawać ruch?" Nie -> pod wypada z Service'u (ale żyje)
+          readinessProbe:
+            httpGet:
+              path: /health.php
+              port: 80
+            periodSeconds: 5
+          # livenessProbe: "czy żyję?" Nie -> K8s restartuje kontener
+          livenessProbe:
+            httpGet:
+              path: /health.php
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: code
+          configMap:
+            name: web-code
+---
+# Service = stały adres (DNS + IP) dla grupy podów. Pody się rodzą i umierają
+# (zmieniają IP), a Service zawsze kieruje ruch do aktualnych, GOTOWYCH podów z labelem app=web.
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: lekcja1
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80          # port Service'u
+      targetPort: 80    # port w kontenerze

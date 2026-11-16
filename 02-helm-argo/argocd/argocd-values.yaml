@@ -1,0 +1,7 @@
+# Wartości do instalacji SAMEGO Argo CD przez Helma (oficjalny chart argo/argo-cd).
+# Dokładnie tak instaluje się w firmach narzędzia "z półki": gotowy chart + mały plik z nadpisaniami.
+configs:
+  params:
+    server.insecure: true   # lokalnie bez HTTPS, żeby port-forward był prosty. NIGDY na produkcji
+dex:
+  enabled: false            # SSO (logowanie przez Google/GitHub). Lokalnie niepotrzebne

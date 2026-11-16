@@ -1,0 +1,25 @@
+# Application = "Argo, pilnuj, żeby w klastrze było to, co jest w tym repo pod tą ścieżką".
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: demo-staging
+  namespace: argocd           # obiekty Application mieszkają w namespace Argo
+spec:
+  project: default
+  source:
+    repoURL: __REPO_URL__     # SKĄD: repo w gicie
+    targetRevision: main      # która gałąź / tag
+    path: 02-helm-argo/chart  # gdzie leży chart
+    helm:
+      releaseName: demo
+      valueFiles:
+        - values-staging.yaml # z jakimi wartościami
+  destination:
+    server: https://kubernetes.default.svc   # DOKĄD: ten sam klaster, w którym działa Argo
+    namespace: staging
+  syncPolicy:
+    automated:                # AUTO-SYNC: zmiana w gicie -> Argo sam wdraża
+      prune: true             # usunąłeś coś z gita -> Argo usuwa to z klastra
+      selfHeal: true          # ktoś zmienił coś ręcznie kubectl-em -> Argo cofa do stanu z gita
+    syncOptions:
+      - CreateNamespace=true

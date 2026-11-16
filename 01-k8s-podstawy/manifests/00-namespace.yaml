@@ -1,0 +1,6 @@
+# Namespace = "folder" w klastrze. Dzieli zasoby (np. per aplikacja albo per środowisko).
+# W pracy zobaczysz np. namespace'y: production, staging, monitoring, argocd...
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lekcja1

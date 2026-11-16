@@ -1,0 +1,47 @@
+# ConfigMap = konfiguracja, która NIE jest tajna (odpowiednik części .env).
+# Secret    = konfiguracja tajna (hasła, tokeny).
+#
+# UWAGA: Secret w K8s to tylko base64, a nie szyfrowanie! Dlatego w prawdziwym repo
+# NIE trzyma się Secretów w gicie w takiej formie, tylko np. External Secrets Operator
+# (ciągnie z AWS Secrets Manager), Sealed Secrets albo SOPS. Jeśli zobaczysz w repo
+# IaC Secret z hasłem w plain text, to jest ten "potencjalny problem" do zgłoszenia.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: lekcja1
+data:
+  APP_ENV: "staging"
+  RABBITMQ_HOST: "rabbitmq"     # <- nazwa Service'u! W klastrze DNS rozwiązuje ją na IP
+  RABBITMQ_PORT: "5672"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-secrets
+  namespace: lekcja1
+type: Opaque
+stringData:                      # stringData = K8s sam zakoduje do base64
+  RABBITMQ_USER: "app"
+  RABBITMQ_PASSWORD: "super-tajne-haslo"
+---
+# Kod aplikacji w ConfigMapie to SKRÓT na potrzeby lekcji (żeby nie budować obrazu).
+# W prawdziwym świecie kod siedzi w obrazie Dockera zbudowanym przez CI.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-code
+  namespace: lekcja1
+data:
+  index.php: |
+    <?php
+    header('Content-Type: text/plain');
+    echo "Hej z poda: " . gethostname() . "\n";
+    echo "APP_ENV: " . getenv('APP_ENV') . "\n";
+    echo "RabbitMQ: " . getenv('RABBITMQ_HOST') . ":" . getenv('RABBITMQ_PORT') . "\n";
+    $sock = @fsockopen(getenv('RABBITMQ_HOST'), (int) getenv('RABBITMQ_PORT'), $errno, $errstr, 2);
+    echo "Połączenie z RabbitMQ: " . ($sock ? "OK" : "BRAK ($errstr)") . "\n";
+    echo "Hasło z Secreta ma " . strlen(getenv('RABBITMQ_PASSWORD')) . " znaków (sekretów się nie wypisuje!)\n";
+  health.php: |
+    <?php
+    echo "ok";

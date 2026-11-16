@@ -1,0 +1,148 @@
+# NIE CZYTAJ TEGO PLIKU, zanim nie spróbujesz zdiagnozować awarii samym kubectl!
+# W pracy też nie zawsze od razu wiesz, który plik jest winny.
+#
+# Uruchom: kubectl apply -f awarie/awarie.yaml
+# Diagnozuj: kubectl get pods -n awarie   (i dalej sam :) )
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: awarie
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sklep
+  namespace: awarie
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: sklep }
+  template:
+    metadata:
+      labels: { app: sklep }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raporty
+  namespace: awarie
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: raporty }
+  template:
+    metadata:
+      labels: { app: raporty }
+    spec:
+      containers:
+        - name: generator
+          image: php:8.3-cli
+          command: ["php", "-d", "memory_limit=-1", "-r", "$raport = str_repeat('x', 300 * 1024 * 1024); echo 'gotowe'; sleep(3600);"]
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: awarie
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: awarie
+spec:
+  selector: { app: api }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mailer-secret
+  namespace: awarie
+stringData:
+  SMTP_PASS: "haslo123"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailer
+  namespace: awarie
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mailer }
+  template:
+    metadata:
+      labels: { app: mailer }
+    spec:
+      containers:
+        - name: worker
+          image: php:8.3-cli
+          command: ["php", "-r", "while (true) { echo 'wysyłam maile...' . PHP_EOL; sleep(10); }"]
+          env:
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mailer-secret
+                  key: SMTP_PASS
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 64Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: panel
+  namespace: awarie
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: panel }
+  template:
+    metadata:
+      labels: { app: panel }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          readinessProbe:
+            tcpSocket: { port: 80 }
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: panel
+  namespace: awarie
+spec:
+  selector: { app: panel }
+  ports: [{ port: 80, targetPort: 80 }]

@@ -1,0 +1,34 @@
+# values.yaml = DOMYŚLNE wartości dla szablonów z templates/.
+# Pliki values-staging.yaml / values-production.yaml nadpisują tylko to, co się różni.
+# W pracy 90% zmian robisz właśnie w plikach values, a nie w szablonach.
+
+replicaCount: 1
+
+image:
+  repository: php
+  tag: "8.3-apache"   # na produkcji: konkretny tag z CI, np. "1.4.2" albo hash commita
+
+# Wersja wyświetlana na stronie. Zmień -> zmieni się ConfigMapa -> checksum -> automatyczny rollout
+appVersion: "1.0.0"
+
+env:
+  APP_ENV: dev
+
+message: "Hej z Helma!"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 128Mi
+
+worker:
+  enabled: false      # {{ if .Values.worker.enabled }} w templates/worker.yaml
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 10m
+      memory: 16Mi
+    limits:
+      memory: 32Mi

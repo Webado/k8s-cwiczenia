@@ -1,0 +1,2 @@
+# Manifesty i skrypty trafiają do linuksowych kontenerów, więc zawsze LF (nie CRLF z Windowsa)
+* text=auto eol=lf

@@ -1,0 +1,30 @@
+# Konfiguracja (-> zmienne środowiskowe)
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-env
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.env }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+  APP_VERSION: {{ .Values.appVersion | quote }}
+---
+# Kod (-> pliki w /var/www/html). Skrót na potrzeby lekcji, normalnie kod jest w obrazie.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-code
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+data:
+  index.php: |
+    <?php
+    header('Content-Type: text/plain');
+    echo {{ .Values.message | quote }} . "\n\n";
+    echo "Pod:         " . gethostname() . "\n";
+    echo "APP_ENV:     " . getenv('APP_ENV') . "\n";
+    echo "APP_VERSION: " . getenv('APP_VERSION') . "\n";
+  health.php: |
+    <?php echo "ok";

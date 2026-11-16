@@ -1,0 +1,7 @@
+# Chart.yaml = metadane charta (jak composer.json dla paczki)
+apiVersion: v2
+name: demo-app
+description: Mini aplikacja PHP (web + worker) do nauki Helma i Argo CD
+type: application
+version: 0.1.0        # wersja CHARTA (szablonów)
+appVersion: "1.0.0"   # wersja APLIKACJI (informacyjnie)

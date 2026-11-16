@@ -1,0 +1,56 @@
+{{- /*
+Porównaj z 01-k8s-podstawy/manifests/20-web.yaml: to ten sam Deployment,
+tylko wartości przychodzą z .Values (values*.yaml), a nazwy z .Release.Name.
+Podgląd wyrenderowanego YAML-a: helm template demo ./chart -f chart/values-staging.yaml
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-web
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+    app.kubernetes.io/component: web
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "demo-app.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: web
+  template:
+    metadata:
+      labels:
+        {{- include "demo-app.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: web
+      annotations:
+        # TRIK z lekcji 1 (zadanie 3): hash zawartości ConfigMapy.
+        # Zmiana configu -> inny hash -> zmienia się szablon poda -> K8s SAM robi rollout.
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    spec:
+      containers:
+        - name: php
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-env
+          volumeMounts:
+            - name: code
+              mountPath: /var/www/html
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health.php
+              port: 80
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health.php
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: code
+          configMap:
+            name: {{ .Release.Name }}-code
