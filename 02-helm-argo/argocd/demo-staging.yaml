@@ -7,7 +7,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: __REPO_URL__     # SKĄD: repo w gicie
+    repoURL: https://github.com/Webado/k8s-cwiczenia.git     # SKĄD: repo w gicie
     targetRevision: main      # która gałąź / tag
     path: 02-helm-argo/chart  # gdzie leży chart
     helm:
