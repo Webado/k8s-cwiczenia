@@ -8,6 +8,3 @@ message: "Hej ze stagingu!"
 
 worker:
   enabled: true
-
-image:
-  tag: "8.3-apahce"
