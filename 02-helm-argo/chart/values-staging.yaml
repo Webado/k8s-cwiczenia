@@ -1,5 +1,5 @@
 # Nadpisania dla STAGINGU (Argo CD: auto-sync + self-heal)
-replicaCount: 2
+replicaCount: 3
 
 env:
   APP_ENV: staging
