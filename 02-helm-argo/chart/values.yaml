@@ -23,6 +23,19 @@ resources:
   limits:
     memory: 128Mi
 
+# HPA (HorizontalPodAutoscaler): autoskalowanie liczby podów web po zużyciu CPU.
+# Gdy enabled: true, `replicaCount` jest IGNOROWANE (repliki ustawia HPA, a nie git). Patrz lekcja 03.
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 60   # % z resources.requests.cpu, a NIE z całego rdzenia
+
+# Strategia rolloutu (lekcja 03). Domyślne K8s: 25% / 25%
+rollingUpdate:
+  maxSurge: 25%
+  maxUnavailable: 25%
+
 worker:
   enabled: false      # {{ if .Values.worker.enabled }} w templates/worker.yaml
   replicaCount: 1

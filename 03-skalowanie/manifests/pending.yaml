@@ -1,0 +1,24 @@
+# Aplikacja, która "prosi" o więcej, niż ma klaster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: raport-roczny
+  namespace: lekcja3
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: raport-roczny }
+  template:
+    metadata:
+      labels: { app: raport-roczny }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-cli
+          command: ["sleep", "infinity"]
+          resources:
+            requests:
+              cpu: "30"          # 30 rdzeni!
+              memory: 64Mi
+            limits:
+              memory: 128Mi

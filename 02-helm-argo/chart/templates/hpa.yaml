@@ -1,0 +1,27 @@
+{{- /*
+HorizontalPodAutoscaler: co ~15 s sprawdza średnie zużycie CPU podów web (z metrics-server)
+i ustawia liczbę replik Deploymentu w zakresie min..max.
+Wzór: potrzebne_repliki = ceil( aktualne_repliki * aktualne_CPU% / docelowe_CPU% )
+*/}}
+{{- if .Values.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-web
+  labels:
+    {{- include "demo-app.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-web
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}

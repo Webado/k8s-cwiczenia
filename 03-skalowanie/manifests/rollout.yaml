@@ -1,0 +1,37 @@
+# Deployment do eksperymentów ze strategią rolloutu.
+# 4 repliki + minReadySeconds, żeby rollout był na tyle wolny, że da się go obserwować.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lekcja3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sklep
+  namespace: lekcja3
+spec:
+  replicas: 4
+  minReadySeconds: 5            # pod musi być Ready przez 5 s, zanim uznamy go za dostępny
+  progressDeadlineSeconds: 120  # po tylu sekundach bez postępu rollout = "failed" (domyślnie 600)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%             # ile podów PONAD replicas wolno dołożyć w trakcie rolloutu
+      maxUnavailable: 25%       # ile podów PONIŻEJ replicas wolno mieć w trakcie rolloutu
+  selector:
+    matchLabels: { app: sklep }
+  template:
+    metadata:
+      labels: { app: sklep }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          readinessProbe:
+            tcpSocket: { port: 80 }
+            periodSeconds: 2
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }

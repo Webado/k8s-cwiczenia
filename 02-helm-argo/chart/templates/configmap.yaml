@@ -28,3 +28,9 @@ data:
     echo "APP_VERSION: " . getenv('APP_VERSION') . "\n";
   health.php: |
     <?php echo "ok";
+  cpu.php: |
+    <?php
+    // Symulacja "ciężkiego" endpointu (np. generowanie PDF): ok. 200 ms czystego CPU na request
+    $start = microtime(true); $x = 0;
+    while (microtime(true) - $start < 0.2) { $x += sqrt(mt_rand()); }
+    echo "Policzone na " . gethostname() . "\n";

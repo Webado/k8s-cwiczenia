@@ -11,7 +11,15 @@ metadata:
     {{- include "demo-app.labels" . | nindent 4 }}
     app.kubernetes.io/component: web
 spec:
+  {{- if not .Values.autoscaling.enabled }}
+  # Gdy działa HPA, NIE wpisujemy replicas, bo Argo i HPA by się przepychały
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: {{ .Values.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.rollingUpdate.maxUnavailable }}
   selector:
     matchLabels:
       {{- include "demo-app.selectorLabels" . | nindent 6 }}
