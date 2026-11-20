@@ -18,7 +18,7 @@ spec:
           command: ["sleep", "infinity"]
           resources:
             requests:
-              cpu: "30"          # 30 rdzeni!
+              cpu: "1"          # 30 rdzeni!
               memory: 64Mi
             limits:
               memory: 128Mi

@@ -8,3 +8,6 @@ message: "Hej ze stagingu!"
 
 worker:
   enabled: true
+
+autoscaling:
+  enabled: true

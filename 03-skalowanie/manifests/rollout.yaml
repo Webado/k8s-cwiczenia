@@ -17,8 +17,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 25%             # ile podów PONAD replicas wolno dołożyć w trakcie rolloutu
-      maxUnavailable: 25%       # ile podów PONIŻEJ replicas wolno mieć w trakcie rolloutu
+      maxSurge: 100%             # ile podów PONAD replicas wolno dołożyć w trakcie rolloutu
+      maxUnavailable: 0       # ile podów PONIŻEJ replicas wolno mieć w trakcie rolloutu
   selector:
     matchLabels: { app: sklep }
   template:
