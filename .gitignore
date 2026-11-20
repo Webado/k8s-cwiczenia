@@ -1,1 +1,7 @@
 .idea/
+.mcp.json
+
+# Terraform: pobrane providery i STATE (zawiera sekrety, nigdy do gita!)
+.terraform/
+*.tfstate
+*.tfstate.*
