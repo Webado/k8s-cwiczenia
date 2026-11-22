@@ -5,3 +5,7 @@
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Lekcja 05: zależności i "śmieci" generowane lokalnie
+05-docker-obrazy/app/vendor/
+05-docker-obrazy/app/var/

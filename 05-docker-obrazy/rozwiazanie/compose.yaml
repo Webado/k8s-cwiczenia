@@ -1,0 +1,25 @@
+# Lokalne środowisko developerskie z targetem "dev".
+# Uruchom z folderu app/:  docker compose -f ../rozwiazanie/compose.yaml up --build
+services:
+  web:
+    build:
+      context: ../app
+      dockerfile: ../rozwiazanie/Dockerfile
+      target: dev
+    ports:
+      - "8081:80"
+    volumes:
+      - ../app:/var/www/html          # kod z dysku: zmiana w pliku = od razu widoczna, bez rebuilda
+    environment:
+      XDEBUG_MODE: debug
+      XDEBUG_CONFIG: client_host=host.docker.internal
+
+  worker:
+    build:
+      context: ../app
+      dockerfile: ../rozwiazanie/Dockerfile
+      target: dev
+    command: ["worker"]
+    stop_signal: SIGTERM              # target dev też dziedziczy SIGWINCH z php:apache
+    volumes:
+      - ../app:/var/www/html

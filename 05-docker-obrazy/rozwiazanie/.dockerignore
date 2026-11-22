@@ -1,0 +1,20 @@
+# Wszystko, czego NIE wysyłamy do builda (i co nie trafi do obrazu przez COPY . .)
+
+# Git i IDE
+.git
+.idea
+.vscode
+
+# Zależności instalowane w obrazie (lokalny vendor/ ma paczki dev i nadpisałby te z builda!)
+vendor/
+
+# Śmieci runtime: cache, logi, dumpy baz
+var/
+
+# Rzeczy niepotrzebne na produkcji
+tests/
+*.md
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+compose*.yaml
