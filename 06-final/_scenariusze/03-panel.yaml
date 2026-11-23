@@ -1,0 +1,65 @@
+﻿# SPOILER! Nie czytaj przed rozwiązaniem incydentu.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: panel-code
+  namespace: incydenty
+data:
+  index.php: |
+    <?php
+    $start = microtime(true);
+    // "Renderowanie dashboardu": stała ilość obliczeń (ok. 50-100 ms CPU bez ograniczeń)
+    $x = 0;
+    for ($i = 0; $i < 3000000; $i++) { $x += sqrt($i); }
+    header('Content-Type: text/plain');
+    printf("Panel administracyjny\nPod: %s\nStrona wygenerowana w %d ms\n", gethostname(), (microtime(true) - $start) * 1000);
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: panel
+  namespace: incydenty
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: panel }
+  template:
+    metadata:
+      labels: { app: panel }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          volumeMounts:
+            - { name: code, mountPath: /var/www/html }
+          resources:
+            requests: { cpu: 10m, memory: 64Mi }
+            limits: { cpu: 20m, memory: 128Mi }
+      volumes:
+        - name: code
+          configMap: { name: panel-code }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: panel
+  namespace: incydenty
+spec:
+  selector: { app: panel }
+  ports: [{ port: 80, targetPort: 80 }]
+---
+# "Użytkownicy" klikający w panel
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ruch
+  namespace: incydenty
+spec:
+  containers:
+    - name: uzytkownicy
+      image: busybox:1.37
+      command: ["sh", "-c", "while true; do wget -q -O /dev/null -T 30 http://panel/; sleep 1; done"]
+      resources:
+        requests: { cpu: 5m, memory: 8Mi }
+        limits: { memory: 16Mi }

@@ -1,0 +1,38 @@
+# SPOILER! Nie czytaj przed rozwiązaniem incydentu.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: incydenty-sklep
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: limity-zespolu
+  namespace: incydenty-sklep
+spec:
+  hard:
+    requests.cpu: "2"
+    requests.memory: 400Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sklep
+  namespace: incydenty-sklep
+  annotations:
+    zmiana: "Black Friday: skalowanie 3 -> 6 (ticket OPS-1432)"
+spec:
+  replicas: 6
+  selector:
+    matchLabels: { app: sklep }
+  template:
+    metadata:
+      labels: { app: sklep }
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 256Mi }

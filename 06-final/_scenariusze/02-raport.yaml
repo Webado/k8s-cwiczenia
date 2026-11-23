@@ -1,0 +1,33 @@
+# SPOILER! Nie czytaj przed rozwiązaniem incydentu.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: raport-miesieczny
+  namespace: incydenty
+spec:
+  schedule: "*/1 * * * *"          # na produkcji: "0 3 1 * *" (3:00, 1. dnia miesiąca). Tu: co minutę
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: generator
+              image: php:8.3-cli
+              command:
+                - php
+                - -d
+                - memory_limit=-1
+                - -r
+                - |
+                  echo "[INFO] Generuję raport miesięczny: pobieram 48 213 dokumentów...\n";
+                  $dane = str_repeat('x', 250 * 1024 * 1024);
+                  sleep(2);
+                  echo "[INFO] Raport wygenerowany i wysłany na S3\n";
+              resources:
+                requests: { cpu: 10m, memory: 64Mi }
+                limits: { memory: 128Mi }

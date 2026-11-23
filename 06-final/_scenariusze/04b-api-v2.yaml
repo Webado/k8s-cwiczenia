@@ -1,0 +1,41 @@
+# SPOILER! Nie czytaj przed rozwiązaniem incydentu.
+# "Deploy" wersji v2: nowa ConfigMapa z kodem i Deployment wskazujący na nią.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-v2
+  namespace: incydenty
+data:
+  index.php: |
+    <?php header('Content-Type: application/json'); echo json_encode(['version' => 'v2', 'pod' => gethostname(), 'nowosc' => 'eksport do PDF']), "\n";
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: incydenty
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+      annotations:
+        wersja: "v2"
+    spec:
+      containers:
+        - name: php
+          image: php:8.3-apache
+          ports: [{ containerPort: 80 }]
+          readinessProbe:
+            httpGet: { path: /health.php, port: 80 }
+            periodSeconds: 3
+          volumeMounts:
+            - { name: code, mountPath: /var/www/html }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 128Mi }
+      volumes:
+        - name: code
+          configMap: { name: api-v2 }

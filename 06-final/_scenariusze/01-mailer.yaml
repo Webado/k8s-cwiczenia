@@ -1,0 +1,84 @@
+# SPOILER! Nie czytaj przed rozwiązaniem incydentu.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: incydenty
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rabbitmq
+  namespace: incydenty
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: rabbitmq }
+  template:
+    metadata:
+      labels: { app: rabbitmq }
+    spec:
+      containers:
+        - name: rabbitmq
+          image: rabbitmq:3.13-management
+          ports: [{ containerPort: 5672 }]
+          readinessProbe:
+            tcpSocket: { port: 5672 }
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          resources:
+            requests: { cpu: 100m, memory: 256Mi }
+            limits: { memory: 512Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq
+  namespace: incydenty
+spec:
+  selector: { app: rabbitmq }
+  ports: [{ port: 5672, targetPort: 5672 }]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mailer-config
+  namespace: incydenty
+data:
+  RABBITMQ_HOST: "rabbitmq-svc"
+  RABBITMQ_PORT: "5672"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mailer
+  namespace: incydenty
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mailer }
+  template:
+    metadata:
+      labels: { app: mailer }
+    spec:
+      containers:
+        - name: worker
+          image: php:8.3-cli
+          envFrom:
+            - configMapRef: { name: mailer-config }
+          command:
+            - php
+            - -r
+            - |
+              $h = getenv('RABBITMQ_HOST'); $p = (int) getenv('RABBITMQ_PORT');
+              echo "[INFO] mailer-worker start, kolejka: emails.confirmation\n";
+              $s = @fsockopen($h, $p, $errno, $errstr, 3);
+              if (!$s) {
+                  fwrite(STDERR, "[CRITICAL] PhpAmqpLib\\Exception\\AMQPIOException: stream_socket_client(): Unable to connect to tcp://$h:$p ($errstr)\n");
+                  exit(1);
+              }
+              echo "[INFO] Połączono z RabbitMQ $h:$p\n";
+              $i = 0;
+              while (true) { $i++; echo "[INFO] Wysłano mail potwierdzający #$i\n"; sleep(5); }
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 64Mi }

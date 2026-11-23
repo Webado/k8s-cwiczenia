@@ -1,5 +1,6 @@
 .idea/
 .mcp.json
+.claude/settings.local.json
 
 # Terraform: pobrane providery i STATE (zawiera sekrety, nigdy do gita!)
 .terraform/
