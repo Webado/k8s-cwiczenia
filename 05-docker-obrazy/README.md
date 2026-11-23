@@ -140,21 +140,21 @@ Zobacz też `rozwiazanie/compose.yaml`: tak wygląda lokalne środowisko na targ
 
 ### Krok 8: PID 1 i SIGTERM (powrót do lekcji 2)
 ```powershell
-docker run -d --name w sklep:bad worker
-docker logs w
-Measure-Command { docker stop w | Out-Default }    # ile trwało?
-docker logs w                                     # czy worker wypisał "SIGTERM: kończę..."?
-docker rm w
+docker run -d --name worker-test sklep:bad worker
+docker logs worker-test
+Measure-Command { docker stop worker-test | Out-Default }    # ile trwało?
+docker logs worker-test                                     # czy worker wypisał "SIGTERM: kończę..."?
+docker inspect worker-test --format '{{.State.ExitCode}}'   # exit code
+docker rm worker-test
 ```
-`worker.php` **ma** handler SIGTERM (`pcntl_signal`), a mimo to nie zadziałał. Sprawdź też exit code:
-`docker inspect w --format '{{.State.ExitCode}}'`. Co oznacza 137? (Lekcja 1!)
+`worker.php` **ma** handler SIGTERM (`pcntl_signal`), a mimo to nie zadziałał. Co oznacza exit code 137? (Lekcja 1!)
 
 **Tu są DWIE przyczyny naraz.** Śledztwo:
 ```powershell
-docker run -d --name w sklep:bad worker
-docker exec w cat /proc/1/cmdline                              # 1) kto jest PID 1?
+docker run -d --name worker-test sklep:bad worker
+docker exec worker-test cat /proc/1/cmdline                      # 1) kto jest PID 1?
 docker image inspect sklep:bad --format '{{.Config.StopSignal}}' # 2) JAKI sygnał wysyła docker stop?
-docker rm -f w
+docker rm -f worker-test
 ```
 1. **PID 1:** napraw w `docker-entrypoint.sh` *(Hint: jedno słowo przed `php` i przed `apache2-foreground`)*.
 2. **Sygnał:** skąd się wziął, skoro go nie ustawiałeś? *(Hint: `FROM`.)* Dlaczego dla Apache'a jest OK, a dla workera nie?
