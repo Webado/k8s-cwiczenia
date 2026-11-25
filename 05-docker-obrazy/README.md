@@ -78,12 +78,12 @@ Które kroki się przebudowały? Dlaczego `composer install` leci od nowa, skoro
 Edytuj `app/Dockerfile` (i inne pliki w `app/`). Po każdym kroku buduj i porównuj czas i rozmiar.
 Wzorcowe rozwiązanie jest w `rozwiazanie/`, ale zajrzyj tam dopiero po swojej próbie.
 
-### Krok 3: `.dockerignore`
+### Krok 3: `app/.dockerignore`
 Stwórz `app/.dockerignore`, który wyklucza z builda wszystko, co nie powinno trafić do obrazu.
 Co powinno się tam znaleźć? (Pomyśl: śmieci, testy, lokalny `vendor/`, pliki Dockera, git.)
 Sprawdź `transferring context` jeszcze raz.
 
-> Pułapka z życia: bez `vendor/` w `.dockerignore` lokalny `vendor/` (z paczkami dev, zbudowany na innej wersji PHP)
+> Pułapka z życia: bez `vendor/` w `app/.dockerignore` lokalny `vendor/` (z paczkami dev, zbudowany na innej wersji PHP)
 > jest kopiowany do obrazu przez `COPY . .` i nadpisuje to, co zainstalował composer.
 
 ### Krok 4: kolejność warstw

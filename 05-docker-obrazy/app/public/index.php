@@ -9,7 +9,7 @@ $yesNo = fn (bool $v) => $v ? 'TAK' : 'nie';
 $devPackages = is_dir(__DIR__ . '/../vendor/phpunit') ? 'TAK (phpunit w vendor/)' : 'nie';
 
 $body = implode("\n", [
-    'Sklep działa!',
+    'Sklep działa!!!!!!!!!!!!!!!',
     '',
     'PHP:             ' . PHP_VERSION,
     'xdebug:          ' . $yesNo(extension_loaded('xdebug')),
