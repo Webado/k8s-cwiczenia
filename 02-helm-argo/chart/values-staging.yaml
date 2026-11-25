@@ -11,3 +11,4 @@ worker:
 
 autoscaling:
   enabled: true
+  minReplicas: 4   # min. 4 repliki web na stagingu; HPA może dołożyć do maxReplicas (6)
