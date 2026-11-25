@@ -11,3 +11,9 @@ worker:
 
 autoscaling:
   enabled: true
+
+resources:
+  requests:
+    memory: "256Mi"
+  limits:
+    memory: "128Mi"
