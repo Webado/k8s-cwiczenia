@@ -44,7 +44,7 @@ metadata:
   name: mailer-config
   namespace: incydenty
 data:
-  RABBITMQ_HOST: "rabbitmq-svc"
+  RABBITMQ_HOST: "rabbitmq"
   RABBITMQ_PORT: "5672"
 ---
 apiVersion: apps/v1

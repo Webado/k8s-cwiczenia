@@ -44,4 +44,25 @@ if (($cmd -match $kubectlZmiana -or $cmd -match $helmZmiana) -and $cmd -match $n
           "Komendy tylko do odczytu (get, describe, logs, top) są dozwolone.")
 }
 
+# Reguła 3: Terraform bez niszczenia i bez wdrażania "w ciemno"
+#  - destroy (także 'apply -destroy') blokujemy zawsze; 'plan -destroy' tylko pokazuje plan, więc przechodzi,
+#  - apply blokujemy, gdy ma -auto-approve (pomija przeczytanie planu przez człowieka).
+# Każdy fragment komendy (rozdzielony ; & | albo nową linią) sprawdzamy osobno, żeby
+# "terraform plan -destroy; terraform destroy" nie przeszło dzięki słowu "plan" w pierwszej części.
+# "terraform" musi być nazwą programu (np. 'terraform', 'terraform.exe', 'C:\tools\terraform.exe'),
+# a nie fragmentem ścieżki jak '04-terraform/README.md'.
+$tfBin = '(^|[\s\\/"''])terraform(\.exe)?(?=\s|"|$)'
+foreach ($seg in ($cmd -split '[;&|\r\n]+')) {
+    if ($seg -notmatch $tfBin) { continue }
+
+    if ($seg -match '(^|\s)-{0,2}destroy(?=\s|=|"|$)' -and $seg -notmatch ($tfBin + '.*\splan(\s|$)')) {
+        Deny ("Zablokowane przez hook gitops-guard: 'terraform destroy' (albo 'apply -destroy') usuwa infrastrukturę. " +
+              "Claude nie uruchamia tego sam. Pokaż użytkownikowi 'terraform plan -destroy' i niech zdecyduje oraz uruchomi go w swoim terminalu.")
+    }
+    if ($seg -match '\bapply\b' -and $seg -match '-auto-approve\b') {
+        Deny ("Zablokowane przez hook gitops-guard: 'terraform apply -auto-approve' wdraża zmiany bez przeczytania planu. " +
+              "Najpierw 'terraform plan' (najlepiej z '-out=tfplan'), omów wynik z użytkownikiem, a 'apply' niech zatwierdzi on sam.")
+    }
+}
+
 exit 0
