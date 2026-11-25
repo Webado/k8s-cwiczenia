@@ -12,15 +12,29 @@ kto decyduje. Do tego zbudujesz narzędzia z ogłoszenia: *„CLAUDE.md, skille,
 cd 06-final
 .\start-incydenty.ps1          # jeśli PowerShell blokuje: powershell -ExecutionPolicy Bypass -File .\start-incydenty.ps1
 ```
-Odczekaj ok. 2 minuty. **Nie zaglądaj do `_scenariusze/`**: tam są przyczyny, a na produkcji ich nie masz.
-Reset w dowolnym momencie: `.\stop-incydenty.ps1`, potem `.\start-incydenty.ps1`.
+Odczekaj ok. 2 minuty.
+
+### Zasady: co wolno czytać i zmieniać
+| Plik / folder | Przed diagnozą | Po zapisaniu diagnozy |
+|---|---|---|
+| `_scenariusze/<plik incydentu>` | ❌ nie czytaj (tam jest przyczyna) | ✅ czytaj i **edytuj**, żeby wdrożyć poprawkę (`kubectl apply -f`) |
+| `ROZWIAZANIA.md` | ❌ | ✅ po zapisaniu diagnozy **wszystkich** ticketów |
+| `start-` / `stop-incydenty.ps1`, `README.md` | ✅ | ✅ |
+| klaster (`kubectl`) | ✅ wszystko do odczytu | ✅ także zmiany w namespace'ach `incydenty*` |
+
+Reset w dowolnym momencie (przywraca też zepsute wersje plików):
+```powershell
+git checkout -- _scenariusze/
+.\stop-incydenty.ps1
+.\start-incydenty.ps1
+```
 
 ### Zasady dyżuru
 - Incydenty **#1 i #2 rozwiąż sam**, bez AI. Sprawdzasz, ile już umiesz.
 - Incydenty **#3–#5** możesz rozwiązywać z Claude Code (część B2: skill `/diagnoza-k8s`). Najpierw jednak zapisz
   **swoją hipotezę**, potem porównaj z tym, co znajdzie AI.
 - Dla każdego zapisz: **objaw → przyczyna → dowód (komenda + wynik) → poprawka**.
-- Naprawiaj w plikach w `_scenariusze/` (po diagnozie wolno już zajrzeć) i `kubectl apply`. Na koniec
+- Po zapisaniu diagnozy naprawiaj w pliku danego scenariusza (patrz tabela wyżej) i `kubectl apply`. Na koniec
   sprawdź, że **objaw zniknął**. To, że pod jest zielony, nie wystarczy.
 
 Pomocny pod do testowania z wnętrza klastra (udaje użytkownika): `kubectl exec -n incydenty ruch -- wget -q -O- http://<service>/`
